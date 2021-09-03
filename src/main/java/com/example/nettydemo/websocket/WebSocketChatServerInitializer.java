@@ -6,7 +6,10 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.CharsetUtil;
 
 /**
  * @description:
@@ -23,6 +26,8 @@ public class WebSocketChatServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast(new HttpServerCodec());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(new HttpObjectAggregator(64 * 1024));
+        pipeline.addLast("stringDecoder", new StringDecoder(CharsetUtil.UTF_8));  //编码不指定，默认为utf-8
+        pipeline.addLast("stringEncoder", new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast(new TextWebSocketFrameHandler(WEBSOCKET_PATH));
         pipeline.addLast(new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
     }
