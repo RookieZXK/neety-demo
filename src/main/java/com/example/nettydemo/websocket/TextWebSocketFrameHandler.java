@@ -144,7 +144,11 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         String text = msg.text();
 
         LOGGER.info("ws消息接收, uuid:{}, content:{}", uuid, text);
+
         WsTextDTO wsTextDTO = JsonUtil.jsonToEntity(text, WsTextDTO.class);
+        if(wsTextDTO == null){
+            throw new IllegalArgumentException("消息非法");
+        }
 
         if (StringUtils.isNotBlank(wsTextDTO.getToUuid())) {
             // 发送给指定某人
@@ -180,6 +184,13 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) // (7)
             throws Exception {
+
+        if(cause instanceof IllegalArgumentException){
+            LOGGER.error("消息格式异常,关闭当前连接", cause);
+            ctx.close();
+            return;
+        }
+
         LOGGER.error("未知异常", cause);
     }
 }
