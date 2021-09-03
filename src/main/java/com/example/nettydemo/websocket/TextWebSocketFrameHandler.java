@@ -1,23 +1,24 @@
 package com.example.nettydemo.websocket;
 
+import com.example.nettydemo.exception.FormatException;
 import com.example.nettydemo.utils.JsonUtil;
 import com.example.nettydemo.utils.RequestUriUtils;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,11 +77,15 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         Channel channel = ctx.channel();
 
-        String uuid = channel.attr(CHANNEL_UUID_KEY).get().get("uuid");
-        ChannelManager.discard(uuid, channel);
+        String uuid = "";
+
+        Map<String, String> attr = channel.attr(CHANNEL_UUID_KEY).get();
+        if(attr != null){
+            uuid = attr.get("uuid");
+            ChannelManager.discard(uuid, channel);
+        }
 
         LOGGER.info("channel关闭, ip:{}, uid:{}", channel.remoteAddress(), uuid);
-
         super.channelInactive(ctx);
     }
 
@@ -104,14 +109,14 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             String uuid = params.get("uuid");
 
             if (StringUtils.isBlank(uuid)) {
-                LOGGER.info("uuid为空");
-                ctx.close();
+                throw new FormatException("uuid为空,不允许建立连接");
             }
 
             // 储存一些信息
             Attribute<Map<String, String>> attr = ctx.channel().attr(CHANNEL_UUID_KEY);
-            attr.setIfAbsent(ImmutableMap.of("uuid", uuid));
-
+            Map<String, String> tempMap = new HashMap<>();
+            tempMap.put("uuid", uuid);
+            attr.setIfAbsent(tempMap);
             ChannelManager.add(uuid, ctx.channel());
 
             // 因为有可能携带了参数，导致客户端一直无法返回握手包，因此在校验通过后，重置请求路径
@@ -147,7 +152,7 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
 
         WsTextDTO wsTextDTO = JsonUtil.jsonToEntity(text, WsTextDTO.class);
         if(wsTextDTO == null){
-            throw new IllegalArgumentException("消息非法");
+            throw new FormatException("消息格式异常");
         }
 
         if (StringUtils.isNotBlank(wsTextDTO.getToUuid())) {
@@ -182,11 +187,10 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) // (7)
-            throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 
-        if(cause instanceof IllegalArgumentException){
-            LOGGER.error("消息格式异常,关闭当前连接", cause);
+        if(cause instanceof FormatException){
+            LOGGER.error("格式异常,关闭当前连接", cause);
             ctx.close();
             return;
         }
