@@ -80,7 +80,7 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         String uuid = "";
 
         Map<String, String> attr = channel.attr(CHANNEL_UUID_KEY).get();
-        if(attr != null){
+        if (attr != null) {
             uuid = attr.get("uuid");
             ChannelManager.discard(uuid, channel);
         }
@@ -151,7 +151,7 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         LOGGER.info("ws消息接收, uuid:{}, content:{}", uuid, text);
 
         WsTextDTO wsTextDTO = JsonUtil.jsonToEntity(text, WsTextDTO.class);
-        if(wsTextDTO == null){
+        if (wsTextDTO == null) {
             throw new FormatException("消息格式异常");
         }
 
@@ -189,7 +189,7 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 
-        if(cause instanceof FormatException){
+        if (cause instanceof FormatException) {
             LOGGER.error("格式异常,关闭当前连接", cause);
             ctx.close();
             return;
