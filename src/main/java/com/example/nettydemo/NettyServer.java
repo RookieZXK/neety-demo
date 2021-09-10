@@ -36,6 +36,7 @@ public class NettyServer {
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
+                    // 控制channel缓存区大小, 超过high将channel设置为不可写状态, 低于low时，设置为可写状态
                     .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(32 * 1024, 1024 * 1024))
                     .childHandler(new WebSocketChatServerInitializer());
 
