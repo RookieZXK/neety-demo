@@ -33,6 +33,7 @@ public class WebSocketChatServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("stringEncoder", new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast(new TextWebSocketFrameHandler(WEBSOCKET_PATH));
         pipeline.addLast(new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
+        pipeline.addLast(new WsHandshakeCompleteHandler());
         pipeline.addLast(new IdleStateHandler(10, 0, 0, TimeUnit.SECONDS));
         pipeline.addLast(new HeartBeatServerHandler());
     }
