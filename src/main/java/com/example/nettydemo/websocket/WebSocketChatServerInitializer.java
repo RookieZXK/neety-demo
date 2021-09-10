@@ -9,7 +9,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @description:
@@ -30,5 +33,7 @@ public class WebSocketChatServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("stringEncoder", new StringEncoder(CharsetUtil.UTF_8));
         pipeline.addLast(new TextWebSocketFrameHandler(WEBSOCKET_PATH));
         pipeline.addLast(new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
+        pipeline.addLast(new IdleStateHandler(10, 0, 0, TimeUnit.SECONDS));
+        pipeline.addLast(new HeartBeatServerHandler());
     }
 }

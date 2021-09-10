@@ -27,7 +27,7 @@ import java.util.Map;
 public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TextWebSocketFrameHandler.class);
 
-    public static final AttributeKey<Map<String, String>> CHANNEL_UUID_KEY = AttributeKey.valueOf("netty.channel");
+    public static final AttributeKey<Map<String, String>> CHANNEL_UUID_KEY = AttributeKey.valueOf("netty.channel.uuid");
 
     private String wsUriPath;
 
@@ -94,6 +94,8 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
      * @param request
      */
     private void fullHttpRequestHandler(ChannelHandlerContext ctx, FullHttpRequest request) {
+        Channel channel = ctx.channel();
+
         String uri = request.uri();
         Map<String, String> headers = RequestUriUtils.getHeader(request.headers());
 
@@ -110,11 +112,11 @@ public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             }
 
             // 储存一些信息
-            Attribute<Map<String, String>> attr = ctx.channel().attr(CHANNEL_UUID_KEY);
+            Attribute<Map<String, String>> attr = channel.attr(CHANNEL_UUID_KEY);
             Map<String, String> tempMap = new HashMap<>();
             tempMap.put("uuid", uuid);
             attr.setIfAbsent(tempMap);
-            ChannelManager.add(uuid, ctx.channel());
+            ChannelManager.add(uuid, channel);
 
             // 因为有可能携带了参数，导致客户端一直无法返回握手包，因此在校验通过后，重置请求路径
             request.setUri(wsUriPath);
